@@ -17,11 +17,10 @@ class InputReader:
         with open(self.filename) as jsonfile:
             self.resultlist = json.load(jsonfile)
 
-
     def fillkeylists(self):
-        for item in self.keysets:
-            self.keylists[item] = []
         for item in self.resultlist:
+            if tuple(item.keys()) not in self.keylists.keys():
+                self.keylists[tuple(item.keys())] = []
             self.keylists[tuple(item.keys())].append(item)
 
 
