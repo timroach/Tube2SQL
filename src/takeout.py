@@ -17,6 +17,7 @@ class InputReader:
         with open(self.filename) as jsonfile:
             self.resultlist = json.load(jsonfile)
 
+    # Fills out keylists dict
     def fillkeylists(self):
         for item in self.resultlist:
             if tuple(item.keys()) not in self.keylists.keys():
