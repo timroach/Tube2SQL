@@ -57,3 +57,11 @@ def test_db_structure():
             FOREIGN KEY(vidnumber) REFERENCES Video(number),
             FOREIGN KEY (channelnumber) REFERENCES Channel(number))'''
     os.remove('../db/' + test_db.filename)
+
+def test_get_vidid():
+    test_db = builddb.BuildDB("testname")
+    assert test_db.getvidid("https://www.youtube.com/watch?v\u003dtestvidid1") == "testvidid1"
+
+def test_get_chanid():
+    test_db = builddb.BuildDB("testname")
+    assert test_db.getchanid("https://www.youtube.com/channel/testchannelid1") == "testchannelid1"
