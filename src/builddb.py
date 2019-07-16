@@ -25,3 +25,33 @@ class BuildDB:
             self.filename = self.path + self.name + timestamp + ".db"
         return sqlite3.connect(self.filename)
 
+    def builddb(self, connection):
+        cursor = connection.cursor()
+        # Video table
+        cursor.execute('''
+            CREATE TABLE Video(
+            number INTEGER PRIMARY KEY ASC, 
+            id TEXT UNIQUE, 
+            title TEXT,
+            description TEXT)
+            ;
+        ''')
+        # Channel table
+        cursor.execute('''
+            CREATE TABLE Channel(
+            number INTEGER PRIMARY KEY ASC,
+            id TEXT UNIQUE,
+            name TEXT)
+            ''')
+        # Watch events table
+        cursor.execute('''
+            CREATE TABLE Watch_Event(
+            number INTERGER PRIMARY KEY ASC,
+            timestamp TEXT,
+            vidnumber INTEGER, 
+                FOREIGN KEY(vidnumber) REFERENCES Video(number),
+            channelnumber INTEGER,
+                FOREIGN KEY (channelnumber) REFERENCES Channel(number))
+            ;
+            ''')
+
