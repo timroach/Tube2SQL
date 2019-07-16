@@ -56,3 +56,10 @@ class BuildDB:
             ''')
         connection.commit()
 
+    def getvidid(self, url):
+        return url[32:]
+
+    def getchanid(self, url):
+        return url[32:]
+
+    # def scrapetakout(self, takeoutfile):
