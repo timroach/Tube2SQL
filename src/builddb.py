@@ -42,6 +42,7 @@ class BuildDB:
             number INTEGER PRIMARY KEY ASC,
             id TEXT UNIQUE,
             name TEXT)
+            ;
             ''')
         # Watch events table
         cursor.execute('''
@@ -49,9 +50,9 @@ class BuildDB:
             number INTERGER PRIMARY KEY ASC,
             timestamp TEXT,
             vidnumber INTEGER, 
-                FOREIGN KEY(vidnumber) REFERENCES Video(number),
             channelnumber INTEGER,
-                FOREIGN KEY (channelnumber) REFERENCES Channel(number))
-            ;
+            FOREIGN KEY(vidnumber) REFERENCES Video(number),
+            FOREIGN KEY (channelnumber) REFERENCES Channel(number));
             ''')
+        connection.commit()
 
