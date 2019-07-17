@@ -1,11 +1,11 @@
 import pytest
-from src import builddb
+from src import buildsqlitedb
 import os
 import fnmatch
 
 
 def test_db_file():
-    test_db = builddb.BuildDB("testname")
+    test_db = buildsqlitedb.BuildDB("testname")
     connection = test_db.opendb()
     fileexists = False
     for file in os.listdir("../db/"):
@@ -15,7 +15,7 @@ def test_db_file():
     os.remove('../db/' + test_db.filename)
 
 def test_db_connection():
-    test_db = builddb.BuildDB("testname")
+    test_db = buildsqlitedb.BuildDB("testname")
     connection = test_db.opendb()
     cursor = connection.cursor()
     cursor.execute("CREATE TABLE test_table (test1 text, test2 text)")
@@ -27,7 +27,7 @@ def test_db_connection():
     os.remove('../db/' + test_db.filename)
 
 def test_db_structure():
-    test_db = builddb.BuildDB("testname")
+    test_db = buildsqlitedb.BuildDB("testname")
     connection = test_db.opendb()
     test_db.builddb(connection)
     cursor = connection.cursor()
@@ -37,8 +37,7 @@ def test_db_structure():
     assert videoresponse[0] == '''CREATE TABLE Video(
             number INTEGER PRIMARY KEY ASC, 
             id TEXT UNIQUE, 
-            title TEXT,
-            description TEXT)'''
+            title TEXT)'''
     cursor.execute("SELECT sql FROM sqlite_master WHERE name = 'Channel';")
     connection.commit()
     channelresponse = cursor.fetchone()
@@ -52,16 +51,45 @@ def test_db_structure():
     assert watcheventresponse[0] == '''CREATE TABLE Watch_Event(
             number INTERGER PRIMARY KEY ASC,
             timestamp TEXT,
-            vidnumber INTEGER, 
-            channelnumber INTEGER,
-            FOREIGN KEY(vidnumber) REFERENCES Video(number),
-            FOREIGN KEY (channelnumber) REFERENCES Channel(number))'''
+            vidid TEXT, 
+            channelid TEXT,
+            FOREIGN KEY(vidid) REFERENCES Video(id),
+            FOREIGN KEY (channelid) REFERENCES Channel(id))'''
     os.remove('../db/' + test_db.filename)
 
 def test_get_vidid():
-    test_db = builddb.BuildDB("testname")
+    test_db = buildsqlitedb.BuildDB("testname")
     assert test_db.getvidid("https://www.youtube.com/watch?v\u003dtestvidid1") == "testvidid1"
 
 def test_get_chanid():
-    test_db = builddb.BuildDB("testname")
+    test_db = buildsqlitedb.BuildDB("testname")
     assert test_db.getchanid("https://www.youtube.com/channel/testchannelid1") == "testchannelid1"
+
+def test_vidinsertvalues():
+    test_db = buildsqlitedb.BuildDB("testname")
+    assert test_db.videoinsertvalues(
+        { "header": "YouTube",
+          "title": "Watched Test title 1",
+          "titleUrl": "https://www.youtube.com/watch?v\u003dtestvidid1",
+          "subtitles": [{
+            "name": "Test channel 1",
+            "url": "https://www.youtube.com/channel/testchannelid1"
+          }],
+          "time": "2019-07-14T16:35:31.366Z",
+          "products": ["YouTube"]
+        }) == ("testvidid1", "Test title 1")
+
+def test_channelinsertvalues():
+    test_db = buildsqlitedb.BuildDB("testname")
+    assert test_db.channelinsertvalues({ "header": "YouTube",
+      "title": "Watched Test title 1",
+      "titleUrl": "https://www.youtube.com/watch?v\u003dtestvidid1",
+      "subtitles": [{
+        "name": "Test channel 1",
+        "url": "https://www.youtube.com/channel/testchannelid1"
+      }],
+      "time": "2019-07-14T16:35:31.366Z",
+      "products": ["YouTube"]
+    }) == ("testchannelid1", "Test channel 1")
+
+
