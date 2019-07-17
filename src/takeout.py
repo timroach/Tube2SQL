@@ -12,6 +12,8 @@ class InputReader:
         # contents of which are the dicts of each JSON
         # with this key format
         self.keylists = {}
+        self.readjsonfile()
+        self.fillkeylists()
 
     def readjsonfile(self):
         with open(self.filename) as jsonfile:
