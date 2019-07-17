@@ -8,7 +8,7 @@ test_files = {"../inputfiles/watch-history.json", "testtakeoutfile.json"}
 # JSON file with the minimum set of properties per video
 @pytest.mark.parametrize("test_file", test_files)
 def test_file_import(test_file):
-    testjsonfile = takeout.InputReader(test_file)
+    testjsonfile = takeout.WatchHistoryReader(test_file)
     testjsonfile.readjsonfile()
     testjsonfile.fillkeylists()
     # Three possible sets of dict keys for each JSON watch history entry
