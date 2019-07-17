@@ -1,6 +1,6 @@
 import json
 
-class InputReader:
+class WatchHistoryReader:
 
     def __init__(self, filename):
         self.filename = filename
