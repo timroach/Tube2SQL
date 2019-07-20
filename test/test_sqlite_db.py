@@ -49,7 +49,7 @@ def test_db_structure():
     connection.commit()
     watcheventresponse = cursor.fetchone()
     assert watcheventresponse[0] == '''CREATE TABLE Watch_Event(
-            number INTERGER PRIMARY KEY ASC,
+            number INTEGER PRIMARY KEY ASC,
             timestamp TEXT,
             vidid TEXT, 
             channelid TEXT,
