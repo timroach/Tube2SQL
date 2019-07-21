@@ -1,23 +1,27 @@
 import json
-
-class WatchHistoryReader:
-
+class JsonReader:
     def __init__(self, filename):
         self.filename = filename
         # Stores dicts of JSON data parsed from input file
         self.resultlist = []
+        self.readjsonfile()
+
+    # Reads json file into self.resultlist dict
+    def readjsonfile(self):
+        with open(self.filename) as jsonfile:
+            self.resultlist = json.load(jsonfile)
+
+class WatchHistoryReader(JsonReader):
+
+    def __init__(self, filename):
+        JsonReader.__init__(self, filename)
         # Unique URL formats stored
         self.urltypes = set()
         # Dict with indexes of unique sets of JSON keys,
         # contents of which are the dicts of each JSON
         # with this key format
         self.keylists = {}
-        self.readjsonfile()
         self.fillkeylists()
-
-    def readjsonfile(self):
-        with open(self.filename) as jsonfile:
-            self.resultlist = json.load(jsonfile)
 
     # Fills out keylists dict
     def fillkeylists(self):
@@ -26,5 +30,8 @@ class WatchHistoryReader:
                 self.keylists[tuple(item.keys())] = []
             self.keylists[tuple(item.keys())].append(item)
 
+class LikeHistoryReader(JsonReader):
 
+    def __init__(self, filename):
+        JsonReader.__init__(self, filename)
 
