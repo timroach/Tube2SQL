@@ -1,4 +1,6 @@
 import json
+
+
 class JsonReader:
     def __init__(self, filename):
         self.filename = filename
@@ -10,6 +12,7 @@ class JsonReader:
     def readjsonfile(self):
         with open(self.filename) as jsonfile:
             self.resultlist = json.load(jsonfile)
+
 
 class WatchHistoryReader(JsonReader):
 
@@ -30,8 +33,9 @@ class WatchHistoryReader(JsonReader):
                 self.keylists[tuple(item.keys())] = []
             self.keylists[tuple(item.keys())].append(item)
 
+
 class LikeHistoryReader(JsonReader):
 
     def __init__(self, filename):
         JsonReader.__init__(self, filename)
-
+        self.likelist = []
