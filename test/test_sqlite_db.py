@@ -53,6 +53,7 @@ def test_db_structure():
             timestamp TEXT,
             vidid TEXT, 
             channelid TEXT,
+            userid TEXT,
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (channelid) REFERENCES Channel(id))'''
     os.remove('../db/' + test_db.filename)
