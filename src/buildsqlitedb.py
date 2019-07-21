@@ -50,6 +50,7 @@ class BuildDB:
             timestamp TEXT,
             vidid TEXT, 
             channelid TEXT,
+            userid TEXT,
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (channelid) REFERENCES Channel(id));
             ''')
@@ -94,7 +95,7 @@ class BuildDB:
         else:
             return '', ''
 
-    def scrapetakeout(self, inputreader, connection):
+    def scrapetakeoutwatch(self, inputreader, connection):
         cursor = connection.cursor()
         for key in inputreader.keylists.keys():
             for item in inputreader.keylists.get(key):
@@ -103,7 +104,7 @@ class BuildDB:
                 timestamp = item.get('time', '')
                 cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?,?)', vidvalues)
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
-                cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid) VALUES(?, ?, ?)',
-                                   (timestamp, vidvalues[0], chanvalues[0]))
+                cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)',
+                                   (timestamp, vidvalues[0], chanvalues[0], self.name))
             connection.commit()
 
