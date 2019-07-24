@@ -43,6 +43,13 @@ class BuildDB:
             name TEXT)
             ;
             ''')
+        # Playlist table
+        cursor.execute('''
+            CREATE TABLE Playlist(
+            number INTEGER PRIMARY KEY ASC,
+            id TEXT UNIQUE,
+            name TEXT)
+            ;''')
         # Watch events table
         cursor.execute('''
             CREATE TABLE Watch_Event(
@@ -61,8 +68,19 @@ class BuildDB:
             timestamp TEXT,
             vidid TEXT,
             userid TEXT,
+            playlistid TEXT,
             FOREIGN KEY(vidid) REFERENCES Video(id),
-            FOREIGN KEY(userid) REFERENCES Channel(id));''')
+            FOREIGN KEY(userid) REFERENCES Channel(id),
+            FOREIGN KEY (playlistid) REFERENCES Playlist(id));''')
+        # Subscription events table
+        cursor.execute('''
+            CREATE TABLE Subscription_Add_Event(
+            number INTEGER PRIMARY KEY ASC,
+            timestamp TEXT,
+            channelid TEXT,
+            userid TEXT,
+            FOREIGN KEY(channelid) REFERENCES Channel(id),
+            FOREIGN KEY (userid) REFERENCES Channel(id))''')
         connection.commit()
 
     # Shorten video URL into video ID
@@ -113,8 +131,7 @@ class BuildDB:
                 timestamp = item.get('time', '')
                 cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?,?)', vidvalues)
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
-                cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)',
-                                   (timestamp, vidvalues[0], chanvalues[0], self.name))
+                cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
             connection.commit()
 
     def scrapetakeoutplaylist(self, inputreader, connection):
@@ -125,10 +142,20 @@ class BuildDB:
             timestamp = item.get("contentDetails").get("videoPublishedAt")
             channelid = item.get("snippet").get("channelId")
             channelname = item.get("snippet").get("channelTitle")
+            playlistid = item.get("snippet").get("playlistId")
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
-            cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid) VALUES (?, ?, ?)', (timestamp, vidid, channelid))
+            cursor.execute('INSERT OR IGNORE INTO Playlist(id) VALUES(?)', (playlistid,))
+            cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
         connection.commit()
 
-#    def scrapetakeoutsubs(self, inputreader, connection):
-        
+    def scrapetakeoutsubs(self, inputreader, connection):
+        cursor = connection.cursor()
+        for item in inputreader.resultlist:
+            userid = item.get("snippet").get("channelId")
+            channelid = item.get("snippet").get("resourceId").get("channelId")
+            channelname = item.get("snippet").get("title")
+            timestamp = item.get("snippet").get("publishedAt")
+            cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
+            cursor.execute('INSERT INTO Subscription_Add_Event(timestamp, channelid, userid) VALUES (?, ?, ?)', (timestamp, channelid, userid))
+        connection.commit()

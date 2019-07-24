@@ -38,4 +38,4 @@ class PlaylistReader(JsonReader):
 
     def __init__(self, filename):
         JsonReader.__init__(self, filename)
-        self.likelist = []
+        self.playlistname = ""

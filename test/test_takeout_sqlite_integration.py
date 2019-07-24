@@ -27,10 +27,17 @@ def test_watch_trial_run(test_db):
     cursor = connection.cursor()
     os.remove('../db/' + test_db.filename)
 
-def test_like_trial_run():
-    test_db = buildsqlitedb.BuildDB("testname")
+def test_like_trial_run(test_db):
     connection = test_db.opendb()
     test_db.builddb(connection)
     inputreader = takeout.PlaylistReader("../inputfiles/Takeout/YouTube/playlists/likes.json")
     test_db.scrapetakeoutplaylist(inputreader, connection)
     os.remove('../db/' + test_db.filename)
+
+def test_subs_trial_run(test_db):
+    connection = test_db.opendb()
+    test_db.builddb(connection)
+    inputreader = takeout.JsonReader("../inputfiles/Takeout/YouTube/subscriptions/subscriptions.json")
+    test_db.scrapetakeoutsubs(inputreader, connection)
+    os.remove('../db/' + test_db.filename)
+
