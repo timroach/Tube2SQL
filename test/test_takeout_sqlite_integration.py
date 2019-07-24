@@ -31,3 +31,6 @@ def test_like_trial_run():
     test_db = buildsqlitedb.BuildDB("testname")
     connection = test_db.opendb()
     test_db.builddb(connection)
+    inputreader = takeout.PlaylistReader("../inputfiles/Takeout/YouTube/playlists/likes.json")
+    test_db.scrapetakeoutplaylist(inputreader, connection)
+    os.remove('../db/' + test_db.filename)

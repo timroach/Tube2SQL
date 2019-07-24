@@ -34,7 +34,7 @@ class WatchHistoryReader(JsonReader):
             self.keylists[tuple(item.keys())].append(item)
 
 
-class LikeHistoryReader(JsonReader):
+class PlaylistReader(JsonReader):
 
     def __init__(self, filename):
         JsonReader.__init__(self, filename)

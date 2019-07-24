@@ -54,6 +54,15 @@ class BuildDB:
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (channelid) REFERENCES Channel(id));
             ''')
+        # Like events table
+        cursor.execute('''
+            CREATE TABLE Playlist_Add_Event(
+            number INTEGER PRIMARY KEY ASC,
+            timestamp TEXT,
+            vidid TEXT,
+            userid TEXT,
+            FOREIGN KEY(vidid) REFERENCES Video(id),
+            FOREIGN KEY(userid) REFERENCES Channel(id));''')
         connection.commit()
 
     # Shorten video URL into video ID
@@ -108,3 +117,18 @@ class BuildDB:
                                    (timestamp, vidvalues[0], chanvalues[0], self.name))
             connection.commit()
 
+    def scrapetakeoutplaylist(self, inputreader, connection):
+        cursor = connection.cursor()
+        for item in inputreader.resultlist:
+            vidid = item.get("contentDetails").get("videoId")
+            vidtitle = item.get("snippet").get("title")
+            timestamp = item.get("contentDetails").get("videoPublishedAt")
+            channelid = item.get("snippet").get("channelId")
+            channelname = item.get("snippet").get("channelTitle")
+            cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
+            cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
+            cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid) VALUES (?, ?, ?)', (timestamp, vidid, channelid))
+        connection.commit()
+
+#    def scrapetakeoutsubs(self, inputreader, connection):
+        
