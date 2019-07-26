@@ -2,6 +2,7 @@ import sqlite3
 import os
 import fnmatch
 import datetime
+import re
 
 
 class BuildDB:
@@ -108,11 +109,13 @@ class BuildDB:
         else:
             return title
 
+    # Extract video ID and title from json line
     def videoinsertvalues(self, jsonline):
         id = self.getvidid(jsonline.get('titleUrl', ''))
         title = self.gettitle(jsonline.get('title', ''))
         return id, title
 
+    # Extract channel ID and name from json line
     def channelinsertvalues(self, jsonline):
         subtitlelist = jsonline.get('subtitles', '')
         if subtitlelist and len(subtitlelist) > 0:
@@ -122,6 +125,8 @@ class BuildDB:
         else:
             return '', ''
 
+    # Scrape items from takeout 'watch-history.json' file into
+    # SQLite db
     def scrapetakeoutwatch(self, inputreader, connection):
         cursor = connection.cursor()
         for key in inputreader.keylists.keys():
@@ -134,8 +139,17 @@ class BuildDB:
                 cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
             connection.commit()
 
+    # Scrape items from a takeout playlist file into
+    # SQLite db
     def scrapetakeoutplaylist(self, inputreader, connection):
         cursor = connection.cursor()
+        # playlistnamere = re.search(re.compile(r"(.*\/).*"), inputreader.filename)
+        playlistnamere = re.search(re.compile(r"[ \w-]+\."), inputreader.filename)
+        playlistname = ""
+        if playlistnamere:
+            playlistname = playlistnamere.group(0)[:-1]
+        else:
+            playlistname = inputreader.filename
         for item in inputreader.resultlist:
             vidid = item.get("contentDetails").get("videoId")
             vidtitle = item.get("snippet").get("title")
@@ -145,10 +159,12 @@ class BuildDB:
             playlistid = item.get("snippet").get("playlistId")
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
-            cursor.execute('INSERT OR IGNORE INTO Playlist(id) VALUES(?)', (playlistid,))
+            cursor.execute('INSERT OR IGNORE INTO Playlist(id, name) VALUES(?, ?)', (playlistid, playlistname))
             cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
         connection.commit()
 
+    # Scrapes data from takeout 'subscriptions.json' file
+    # into SQLite db
     def scrapetakeoutsubs(self, inputreader, connection):
         cursor = connection.cursor()
         for item in inputreader.resultlist:
