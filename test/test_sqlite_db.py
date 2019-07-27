@@ -37,7 +37,9 @@ def test_db_structure(test_db):
     assert videoresponse[0] == '''CREATE TABLE Video(
             number INTEGER PRIMARY KEY ASC, 
             id TEXT UNIQUE, 
-            title TEXT)'''
+            title TEXT,
+            channelid TEXT,
+            FOREIGN KEY (channelid) REFERENCES Channel(id))'''
     cursor.execute("SELECT sql FROM sqlite_master WHERE name = 'Channel';")
     connection.commit()
     channelresponse = cursor.fetchone()

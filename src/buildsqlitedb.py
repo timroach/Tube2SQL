@@ -33,7 +33,9 @@ class BuildDB:
             CREATE TABLE Video(
             number INTEGER PRIMARY KEY ASC, 
             id TEXT UNIQUE, 
-            title TEXT)
+            title TEXT,
+            channelid TEXT,
+            FOREIGN KEY (channelid) REFERENCES Channel(id))
             ;
         ''')
         # Channel table
@@ -134,8 +136,8 @@ class BuildDB:
                 vidvalues = self.videoinsertvalues(item)
                 chanvalues = self.channelinsertvalues(item)
                 timestamp = item.get('time', '')
-                cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?,?)', vidvalues)
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
+                cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidvalues[0], vidvalues[1], chanvalues[0]))
                 cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
             connection.commit()
 
@@ -157,8 +159,8 @@ class BuildDB:
             channelid = item.get("snippet").get("channelId")
             channelname = item.get("snippet").get("channelTitle")
             playlistid = item.get("snippet").get("playlistId")
-            cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
+            cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidid, vidtitle, channelid))
             cursor.execute('INSERT OR IGNORE INTO Playlist(id, name) VALUES(?, ?)', (playlistid, playlistname))
             cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
         connection.commit()
