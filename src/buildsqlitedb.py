@@ -5,6 +5,7 @@ import datetime
 import re
 
 
+
 class BuildDB:
 
     def __init__(self, name):
@@ -51,7 +52,9 @@ class BuildDB:
             CREATE TABLE Playlist(
             number INTEGER PRIMARY KEY ASC,
             id TEXT UNIQUE,
-            name TEXT)
+            name TEXT, 
+            userid TEXT,
+            FOREIGN KEY (userid) REFERENCES Channel(id))
             ;''')
         # Watch events table
         cursor.execute('''
@@ -161,7 +164,7 @@ class BuildDB:
             playlistid = item.get("snippet").get("playlistId")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
             cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidid, vidtitle, channelid))
-            cursor.execute('INSERT OR IGNORE INTO Playlist(id, name) VALUES(?, ?)', (playlistid, playlistname))
+            cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
             cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
         connection.commit()
 

@@ -1,5 +1,5 @@
 import json
-
+from bs4 import BeautifulSoup
 
 class JsonReader:
     def __init__(self, filename):

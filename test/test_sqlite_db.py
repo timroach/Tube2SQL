@@ -86,7 +86,9 @@ def test_db_structure(test_db):
     assert watcheventresponse[0] == '''CREATE TABLE Playlist(
             number INTEGER PRIMARY KEY ASC,
             id TEXT UNIQUE,
-            name TEXT)'''
+            name TEXT, 
+            userid TEXT,
+            FOREIGN KEY (userid) REFERENCES Channel(id))'''
     os.remove('../db/' + test_db.filename)
 
 def test_get_vidid(test_db):
