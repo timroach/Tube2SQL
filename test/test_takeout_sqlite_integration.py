@@ -41,3 +41,10 @@ def test_subs_trial_run(test_db):
     test_db.scrapetakeoutsubs(inputreader, connection)
     os.remove('../db/' + test_db.filename)
 
+def test_comments_trial_run(test_db):
+    connection = test_db.opendb()
+    test_db.builddb(connection)
+    inputreader = takeout.CommentReader("../inputfiles/Takeout/YouTube/my-comments/my-comments.html", "testuserid", "testusername")
+    buildsqlitedb.BuildDB.scrapetakeoutcomments(inputreader, connection)
+    os.remove('../db/' + test_db.filename)
+

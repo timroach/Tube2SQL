@@ -1,5 +1,6 @@
 import json
 from bs4 import BeautifulSoup
+from src import buildsqlitedb
 
 class JsonReader:
     def __init__(self, filename):
@@ -39,3 +40,36 @@ class PlaylistReader(JsonReader):
     def __init__(self, filename):
         JsonReader.__init__(self, filename)
         self.playlistname = ""
+
+
+class CommentReader:
+
+    def __init__(self, filename, userid, username):
+        self.resultlist = []
+        self.userid = userid
+        self.username = username
+        with open(filename) as commenttext:
+            soup = BeautifulSoup(commenttext)
+        # vid = buildsqlitedb.BuildDB("vid")
+        testlist = soup.findAll('li')
+        counter = 0
+        vid = buildsqlitedb.BuildDB("vid")
+        for item in soup.findAll('li'):
+            entry = {}
+            counter += 1
+            if item.contents[0] == "Commented on " and item.contents[1].attrs.get("href").startswith("http://www.youtube.com/watch?"):
+
+                entry["vidid"] = vid.getvidid(item.contents[1].attrs.get("href"))
+                entry["vidtitle"] = item.contents[1].text
+                entry["timestamp"] = item.contents[2]
+                entry["comment"] = item.contents[4]
+            elif item.contents[0] == "Replied to a ":
+                entry["vidid"] = vid.getvidid(item.contents[3].attrs.get("href"))
+                entry["vidtitle"] = item.contents[3].text
+                entry["timestamp"] = item.contents[4]
+                entry["comment"] = item.contents[6]
+            if entry:
+                self.resultlist.append(entry)
+
+
+    ''

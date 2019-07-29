@@ -5,7 +5,6 @@ import datetime
 import re
 
 
-
 class BuildDB:
 
     def __init__(self, name):
@@ -56,6 +55,17 @@ class BuildDB:
             userid TEXT,
             FOREIGN KEY (userid) REFERENCES Channel(id))
             ;''')
+        # Comments table
+        cursor.execute('''
+            CREATE TABLE Comment(
+            number INTEGER PRIMARY KEY ASC,
+            timestamp TEXT,
+            vidid TEXT, 
+            comment TEXT,
+            userid TEXT,
+            FOREIGN KEY(vidid) REFERENCES Video(id),
+            FOREIGN KEY (userid) REFERENCES Channel(id))
+                    ''')
         # Watch events table
         cursor.execute('''
             CREATE TABLE Watch_Event(
@@ -150,7 +160,6 @@ class BuildDB:
         cursor = connection.cursor()
         # playlistnamere = re.search(re.compile(r"(.*\/).*"), inputreader.filename)
         playlistnamere = re.search(re.compile(r"[ \w-]+\."), inputreader.filename)
-        playlistname = ""
         if playlistnamere:
             playlistname = playlistnamere.group(0)[:-1]
         else:
@@ -179,4 +188,19 @@ class BuildDB:
             timestamp = item.get("snippet").get("publishedAt")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
             cursor.execute('INSERT INTO Subscription_Add_Event(timestamp, channelid, userid) VALUES (?, ?, ?)', (timestamp, channelid, userid))
+        connection.commit()
+
+    @staticmethod
+    def scrapetakeoutcomments(inputreader, connection):
+        cursor = connection.cursor()
+        userid = inputreader.userid
+        username = inputreader.username
+        for item in inputreader.resultlist:
+            vidid = item.get("vidid")
+            vidtitle = item.get("vidtitle")
+            timestamp = item.get("timestamp")
+            comment = item.get("comment")
+            cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
+            cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (userid, username))
+            cursor.execute("INSERT INTO Comment(timestamp, vidid, comment, userid) VALUES(?, ?, ?, ?)", (timestamp, vidid, comment, userid))
         connection.commit()
