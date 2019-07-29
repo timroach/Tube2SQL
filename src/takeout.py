@@ -50,15 +50,12 @@ class CommentReader:
         self.username = username
         with open(filename) as commenttext:
             soup = BeautifulSoup(commenttext)
-        # vid = buildsqlitedb.BuildDB("vid")
-        testlist = soup.findAll('li')
         counter = 0
         vid = buildsqlitedb.BuildDB("vid")
         for item in soup.findAll('li'):
             entry = {}
             counter += 1
             if item.contents[0] == "Commented on " and item.contents[1].attrs.get("href").startswith("http://www.youtube.com/watch?"):
-
                 entry["vidid"] = vid.getvidid(item.contents[1].attrs.get("href"))
                 entry["vidtitle"] = item.contents[1].text
                 entry["timestamp"] = item.contents[2]
@@ -71,5 +68,3 @@ class CommentReader:
             if entry:
                 self.resultlist.append(entry)
 
-
-    ''
