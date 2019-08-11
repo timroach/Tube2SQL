@@ -10,7 +10,7 @@ def test_db():
 def test_scrape_takeout_watch_history(test_db):
     connection = test_db.opendb()
     test_db.builddb(connection)
-    inputreader = takeout.WatchHistoryReader("testtakeoutfile.json")
+    inputreader = takeout.WatchHistoryReader("watch-history.json")
     test_db.scrapetakeoutwatch(inputreader, connection)
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM Watch_Event WHERE ROWID = 1")

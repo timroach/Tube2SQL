@@ -1,6 +1,8 @@
 import json
 from bs4 import BeautifulSoup
 from src import buildsqlitedb
+import os
+import re
 
 class JsonReader:
     def __init__(self, filename):
@@ -68,3 +70,36 @@ class CommentReader:
             if entry:
                 self.resultlist.append(entry)
 
+class directoryreader:
+
+    def __init__(self, path):
+        self.path = path
+        self.walk = os.walk(path, topdown=False)
+
+    def builddict(self):
+        result = {}
+        pattern = re.compile(r"/Takeout/YouTube/")
+        for root, dirs, files in self.walk:
+            dirloc = pattern.search(root)
+            if dirloc:
+                dirname = root[dirloc.end():]
+                if dirname == "playlists":
+                    if not result.get("playlists"):
+                        result["playlists"] = []
+                    for name in files:
+                        result["playlists"].append(os.path.join(root, name))
+                if dirname == "history":
+                    for name in files:
+                        if name == "watch-history.json":
+                            result["watch-history"] = os.path.join(root, name)
+                if dirname == "my-comments":
+                    for name in files:
+                        if name == "my-comments.html":
+                            result["my-comments"] = os.path.join(root, name)
+                if dirname == "subscriptions":
+                    for name in files:
+                        if name == "subscriptions.json":
+                            result["subscriptions"] = os.path.join(root, name)
+        return result
+
+    

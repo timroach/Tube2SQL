@@ -2,7 +2,7 @@ import pytest
 from src import takeout
 
 # List of .json files to test
-test_files = {"../inputfiles/watch-history.json", "testtakeoutfile.json"}
+test_files = {"../inputfiles/watch-history.json", "watch-history.json"}
 
 # Tests all entries in test_files produce a
 # JSON file with the minimum set of properties per video
@@ -29,4 +29,7 @@ def test_file_import(test_file):
             keysgood = True
     assert keysgood
 
-
+def test_dir_structure():
+    testobj = takeout.directoryreader('./Takeout Test Files')
+    dirlist = testobj.builddict()
+    print("test")
