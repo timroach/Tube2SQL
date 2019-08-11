@@ -102,4 +102,3 @@ class directoryreader:
                             result["subscriptions"] = os.path.join(root, name)
         return result
 
-    
