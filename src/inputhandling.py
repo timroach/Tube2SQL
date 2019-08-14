@@ -3,7 +3,7 @@ import argparse
 from src import takeout, buildsqlitedb
 
 
-class TakeoutScrape:
+class InputParseAndHandle:
     def __init__(self):
         self.database = buildsqlitedb.BuildDB("empty")
 
@@ -125,6 +125,7 @@ class TakeoutScrape:
             sys.exit(
                 "No userid specified and no Takeout files provided which contain userid.\n Rerun with \"takeout -u <userid>\" option or ensure there is at least one playlist file or subcription file present in Takeout directory.")
         if filedict.get("subscriptions"):
+
             subscriptions = takeout.JsonReader(filedict.get("subscriptions")).resultlist
             if subscriptions[0]:
                 userid = subscriptions[0].get("snippet").get("channelId")
@@ -147,34 +148,34 @@ class TakeoutScrape:
                 "No valid username found in Takeout files and none specified in args.\n Rerun with \"takeout -un <username>\" option or ensure there is at least one playlist file present in Takeout directory.")
         # Create the DB object (file will be created automatically on first use)
         takeout_db = buildsqlitedb.BuildDB(userid)
-        # If db file specified in args, open that, otherwise, create new db
+        # If db file specified in args, open that
         if args.database:
             connection = takeout_db.openspecdb(args.database)
+        # Otherwise, create new db and build schema
         else:
             connection = takeout_db.opendb()
+            takeout_db.builddb(connection)
         self.database = takeout_db
-        # Set up database
-        takeout_db.builddb(connection)
         # add watch history to db
         if filedict.get("watch-history"):
-            print("Adding watch history " + filedict.get("watch-history") + " to " + takeout_db.filename)
+            print("Adding watch history " + filedict.get("watch-history"))
             inputreader = takeout.WatchHistoryReader(filedict.get("watch-history"))
             takeout_db.scrapetakeoutwatch(inputreader, connection)
         # Step through each playlist, add each to db
         if filedict.get("playlists"):
             playlists = filedict.get("playlists")
             for item in playlists:
-                print("Adding playlist" + item + " to " + takeout_db.filename)
+                print("Adding playlist" + item )
                 inputreader = takeout.PlaylistReader(item)
                 takeout_db.scrapetakeoutplaylist(inputreader, connection)
         # Add comments to db
         if filedict.get("my-comments"):
-            print("Adding comments " + filedict.get("my-comments") + " to " + takeout_db.filename)
+            print("Adding comments " + filedict.get("my-comments"))
             inputreader = takeout.CommentReader(filedict.get("my-comments"), userid, username)
             takeout_db.scrapetakeoutcomments(inputreader, connection)
         # Add subscriptions to db
         if filedict.get("subscriptions"):
-            print("Adding subscriptions " + filedict.get("subscriptions") + " to " + takeout_db.filename)
+            print("Adding subscriptions " + filedict.get("subscriptions"))
             inputreader = takeout.JsonReader(filedict.get("subscriptions"))
             takeout_db.scrapetakeoutsubs(inputreader, connection)
 

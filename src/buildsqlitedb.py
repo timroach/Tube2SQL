@@ -11,23 +11,20 @@ class BuildDB:
         self.path = '../db/'
         self.name = name
         self.filename = ""
-        self.existingdbs = []
-        for file in os.listdir(self.path):
-            if fnmatch.fnmatch(file, name + '*.db'):
-                self.existingdbs.append(file)
 
     # Returns SQLite connection object for existing db
     # in /db/ directory, if none exist, creates new one
     def opendb(self):
-        if self.existingdbs:
-            self.filename = self.existingdbs[0]
-        else:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            self.filename = self.path + self.name + timestamp + ".db"
+        print("All pathnames relative to current working dir " + os.getcwd())
+        timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.filename = self.path + self.name + timestamp + ".db"
+        print("Created new db file " + self.filename)
         return sqlite3.connect(self.filename)
 
     def openspecdb(self, filename):
+        print("All pathnames relative to current working dir " + os.getcwd())
         self.filename = filename
+        print("Using existing db " + self.filename)
         return sqlite3.connect(self.filename)
 
     def builddb(self, connection):
@@ -102,6 +99,7 @@ class BuildDB:
             FOREIGN KEY(channelid) REFERENCES Channel(id),
             FOREIGN KEY (userid) REFERENCES Channel(id))''')
         connection.commit()
+        print("Database schema created")
 
     # Shorten video URL into video ID
     def getvidid(self, url):
@@ -155,8 +153,9 @@ class BuildDB:
                 timestamp = item.get('time', '')
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
                 cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidvalues[0], vidvalues[1], chanvalues[0]))
-                cursor.execute('INSERT INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
-            connection.commit()
+                cursor.execute('INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
+        print("Inserted " + str(cursor.rowcount) + " rows into Watch_Event table")
+        connection.commit()
 
     # Scrape items from a takeout playlist file into
     # SQLite db
@@ -181,6 +180,7 @@ class BuildDB:
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
             cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
+        print("Inserted " + str(cursor.rowcount) + " rows into Playlist_Add_Event table")
         connection.commit()
 
     # Scrapes data from takeout 'subscriptions.json' file
@@ -194,7 +194,10 @@ class BuildDB:
             timestamp = item.get("snippet").get("publishedAt")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
             cursor.execute('INSERT INTO Subscription_Add_Event(timestamp, channelid, userid) VALUES (?, ?, ?)', (timestamp, channelid, userid))
+        print("Inserted " + str(cursor.rowcount) + " rows into Subscription_Add_Event table")
         connection.commit()
+
+
 
     @staticmethod
     def scrapetakeoutcomments(inputreader, connection):
@@ -209,5 +212,7 @@ class BuildDB:
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (userid, username))
             cursor.execute("INSERT INTO Comment(timestamp, vidid, comment, userid) VALUES(?, ?, ?, ?)", (timestamp, vidid, comment, userid))
+        print("Inserted " + str(cursor.rowcount) + " rows into Comment table")
         connection.commit()
+
 

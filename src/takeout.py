@@ -51,7 +51,7 @@ class CommentReader:
         self.userid = userid
         self.username = username
         with open(filename) as commenttext:
-            soup = BeautifulSoup(commenttext)
+            soup = BeautifulSoup(commenttext, features="lxml")
         counter = 0
         vid = buildsqlitedb.BuildDB("vid")
         for item in soup.findAll('li'):

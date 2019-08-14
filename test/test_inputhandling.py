@@ -29,14 +29,15 @@ test_takeout_bad_args = [
 # Just tests that nothing crashes when tests are called with good args on valid test data.
 @pytest.mark.parametrize("test_args", test_takeout_good_args)
 def test_takout_scrape(test_args):
-    inputhandler = inputhandling.TakeoutScrape()
+    inputhandler = inputhandling.InputParseAndHandle()
     inputhandler.scrapetakeout(test_args)
     dbpath = inputhandler.database.filename
     os.remove(dbpath)
 
+# Test that sys_exit is called when bad args are passed in
 @pytest.mark.parametrize("test_args", test_takeout_bad_args)
 def test_takout_scrape(test_args):
-    inputhandler = inputhandling.TakeoutScrape()
+    inputhandler = inputhandling.InputParseAndHandle()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         inputhandler.scrapetakeout(test_args)
     assert pytest_wrapped_e.type == SystemExit
