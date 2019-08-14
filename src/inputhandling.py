@@ -5,8 +5,7 @@ from src import takeout, buildsqlitedb
 
 class TakeoutScrape:
     def __init__(self):
-        self.directory = ''
-        self.database = ''
+        self.database = buildsqlitedb.BuildDB("empty")
 
     def create_parser(self):
         parser = argparse.ArgumentParser(
@@ -32,6 +31,12 @@ class TakeoutScrape:
             '-u', '--userid',
             type=str, required=False,
             help='Specify userid of owner of Takeout file'
+        )
+
+        parser_takeout.add_argument(
+            '-un', '--username',
+            type=str, required=False,
+            help='Specify username of owner of Takeout file'
         )
 
         # JSON query subparser
@@ -104,33 +109,42 @@ class TakeoutScrape:
         return parser
 
     def scrapetakeout(self, args):
-
+        # Sanity check, this should not run if subparser_name is not 'takeout'
+        if not args.subparser_name == 'takeout':
+            sys.exit("Error, scrapetakeout somehow called without takeout arg")
         if not args.directory:
             todir = '../inputfiles/'
         else:
             todir = args.directory
         dirreader = takeout.directoryreader(todir)
         filedict = dirreader.builddict()
-        # Get userid either from command line input or pull it from a playlist or subcription file
+        # Get userid and username either from command line input or pull it from a playlist or subscription file
+        userid = ''
+        username = ''
         if (not filedict.get("subscriptions") or not filedict.get("playlists")) and not args.userid:
             sys.exit(
                 "No userid specified and no Takeout files provided which contain userid.\n Rerun with \"takeout -u <userid>\" option or ensure there is at least one playlist file or subcription file present in Takeout directory.")
-        elif filedict.get("subscriptions"):
+        if filedict.get("subscriptions"):
             subscriptions = takeout.JsonReader(filedict.get("subscriptions")).resultlist
             if subscriptions[0]:
                 userid = subscriptions[0].get("snippet").get("channelId")
-            else:
-                userid = ""
-        elif filedict.get("playlists"):
-            userid = ""
-            for item in takeout.PlaylistReader(filedict.get("playlists")).resultlist:
-                if item:
-                    userid = item.get("snippet").get("channelId")
+        if filedict.get("playlists"):
+            for item in filedict.get("playlists"):
+                if takeout.PlaylistReader(item).resultlist:
+                    firstitem = takeout.PlaylistReader(item).resultlist[0]
+                    if not userid:
+                        userid = firstitem.get("snippet").get("channelId")
+                    username = firstitem.get("snippet").get("channelTitle")
                     break
-        else:
+        if args.userid:
             userid = args.userid
+        if args.username:
+            username = args.username
         if not userid:
             sys.exit("No valid userid found in Takeout files and none specified in args.\n Rerun with \"takeout -u <userid>\" option or ensure there is at least one playlist file or subcription file present in Takeout directory.")
+        if not username:
+            sys.exit(
+                "No valid username found in Takeout files and none specified in args.\n Rerun with \"takeout -un <username>\" option or ensure there is at least one playlist file present in Takeout directory.")
         # Create the DB object (file will be created automatically on first use)
         takeout_db = buildsqlitedb.BuildDB(userid)
         # If db file specified in args, open that, otherwise, create new db
@@ -138,6 +152,7 @@ class TakeoutScrape:
             connection = takeout_db.openspecdb(args.database)
         else:
             connection = takeout_db.opendb()
+        self.database = takeout_db
         # Set up database
         takeout_db.builddb(connection)
         # add watch history to db
@@ -155,7 +170,7 @@ class TakeoutScrape:
         # Add comments to db
         if filedict.get("my-comments"):
             print("Adding comments " + filedict.get("my-comments") + " to " + takeout_db.filename)
-            inputreader = takeout.CommentReader(filedict.get("my-comments"))
+            inputreader = takeout.CommentReader(filedict.get("my-comments"), userid, username)
             takeout_db.scrapetakeoutcomments(inputreader, connection)
         # Add subscriptions to db
         if filedict.get("subscriptions"):

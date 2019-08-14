@@ -5,7 +5,7 @@
     "totalItemCount" : 1
   },
   "etag" : "\"test etag 1\"",
-  "id" : "test id 1",
+  "id" : "subscribed channel id 1",
   "kind" : "youtube#subscription",
   "snippet" : {
     "channelId" : "User channel ID",
@@ -26,7 +26,7 @@
         "url" : "https://yt3.ggpht.com/vid1thumbnail3/photo.jpg"
       }
     },
-    "title" : "test title 1"
+    "title" : "subscribed channel title 1"
   }
 }, {
   "contentDetails" : {
@@ -35,14 +35,14 @@
     "totalItemCount" : 354
   },
   "etag" : "\"test etag 2\"",
-  "id" : "test video id 2",
+  "id" : "Subscription event id 2",
   "kind" : "youtube#subscription",
   "snippet" : {
     "channelId" : "User channel ID",
-    "description" : "Test channel description 2",
+    "description" : "Subscribed channel description 2",
     "publishedAt" : "2019-06-13T22:27:40.196Z",
     "resourceId" : {
-      "channelId" : "Test channel description 2",
+      "channelId" : "Subscribed channel ID 2",
       "kind" : "youtube#channel"
     },
     "thumbnails" : {
@@ -56,7 +56,7 @@
         "url" : "https://yt3.ggpht.com/vid2thumbnail3/photo.jpg"
       }
     },
-    "title" : "Test channel title 2"
+    "title" : "subscribed channel title 2"
   }
 }
 ]

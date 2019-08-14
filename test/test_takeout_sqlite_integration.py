@@ -1,7 +1,7 @@
-from src import buildsqlitedb
-from src import takeout
-import os
+from src import buildsqlitedb, takeout
 import pytest
+import os
+
 
 @pytest.fixture()
 def test_db():
