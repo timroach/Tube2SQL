@@ -46,10 +46,8 @@ class PlaylistReader(JsonReader):
 
 class CommentReader:
 
-    def __init__(self, filename, userid, username):
+    def __init__(self, filename):
         self.resultlist = []
-        self.userid = userid
-        self.username = username
         with open(filename) as commenttext:
             soup = BeautifulSoup(commenttext)
         counter = 0

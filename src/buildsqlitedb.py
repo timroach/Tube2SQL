@@ -26,6 +26,10 @@ class BuildDB:
             self.filename = self.path + self.name + timestamp + ".db"
         return sqlite3.connect(self.filename)
 
+    def openspecdb(self, filename):
+        self.filename = filename
+        return sqlite3.connect(self.filename)
+
     def builddb(self, connection):
         cursor = connection.cursor()
         # Video table
@@ -168,11 +172,13 @@ class BuildDB:
             vidid = item.get("contentDetails").get("videoId")
             vidtitle = item.get("snippet").get("title")
             timestamp = item.get("contentDetails").get("videoPublishedAt")
+            # channelid, channelname is person who placed item in playlist
             channelid = item.get("snippet").get("channelId")
             channelname = item.get("snippet").get("channelTitle")
             playlistid = item.get("snippet").get("playlistId")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
-            cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidid, vidtitle, channelid))
+            # File does not contain the video's channel ID, video will be inserted into table without channel ID
+            cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
             cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
         connection.commit()
@@ -204,3 +210,4 @@ class BuildDB:
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (userid, username))
             cursor.execute("INSERT INTO Comment(timestamp, vidid, comment, userid) VALUES(?, ?, ?, ?)", (timestamp, vidid, comment, userid))
         connection.commit()
+

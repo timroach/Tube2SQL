@@ -1,0 +1,62 @@
+[ {
+  "contentDetails" : {
+    "activityType" : "all",
+    "newItemCount" : 1,
+    "totalItemCount" : 1
+  },
+  "etag" : "\"test etag 1\"",
+  "id" : "test id 1",
+  "kind" : "youtube#subscription",
+  "snippet" : {
+    "channelId" : "User channel ID",
+    "description" : "Test channel description 1",
+    "publishedAt" : "2019-07-17T09:28:38.511Z",
+    "resourceId" : {
+      "channelId" : "test channel id 1",
+      "kind" : "youtube#channel"
+    },
+    "thumbnails" : {
+      "default" : {
+        "url" : "https://yt3.ggpht.com/vid1thumbnail1/photo.jpg"
+      },
+      "high" : {
+        "url" : "https://yt3.ggpht.com/vid1thumbnail2/photo.jpg"
+      },
+      "medium" : {
+        "url" : "https://yt3.ggpht.com/vid1thumbnail3/photo.jpg"
+      }
+    },
+    "title" : "test title 1"
+  }
+}, {
+  "contentDetails" : {
+    "activityType" : "all",
+    "newItemCount" : 1,
+    "totalItemCount" : 354
+  },
+  "etag" : "\"test etag 2\"",
+  "id" : "test video id 2",
+  "kind" : "youtube#subscription",
+  "snippet" : {
+    "channelId" : "User channel ID",
+    "description" : "Test channel description 2",
+    "publishedAt" : "2019-06-13T22:27:40.196Z",
+    "resourceId" : {
+      "channelId" : "Test channel description 2",
+      "kind" : "youtube#channel"
+    },
+    "thumbnails" : {
+      "default" : {
+        "url" : "https://yt3.ggpht.com/vid2thumbnail1/photo.jpg"
+      },
+      "high" : {
+        "url" : "https://yt3.ggpht.com/vid2thumbnail2/photo.jpg"
+      },
+      "medium" : {
+        "url" : "https://yt3.ggpht.com/vid2thumbnail3/photo.jpg"
+      }
+    },
+    "title" : "Test channel title 2"
+  }
+}
+]
