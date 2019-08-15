@@ -11,6 +11,8 @@ def main():
     args = parser.parse_args()
     if args.subparser_name == 'takeout':
         inputhandler.scrapetakeout(args)
+    elif args.subparser_name == 'json':
+        inputhandler.calljson(args)
     argdict = vars(args)
 
 

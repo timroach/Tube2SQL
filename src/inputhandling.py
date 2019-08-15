@@ -52,6 +52,12 @@ class InputParseAndHandle:
         )
 
         parser_json.add_argument(
+            '-chn', '--channelname',
+            type=str, required=False,
+            help='Get info on username/channelname'
+        )
+
+        parser_json.add_argument(
             '-plid', '--playlistid',
             type=str, required=False,
             help='Specify playlist ID to get info on'
@@ -154,7 +160,7 @@ class InputParseAndHandle:
         # Otherwise, create new db and build schema
         else:
             connection = takeout_db.opendb()
-            takeout_db.builddb(connection)
+            takeout_db.createschema(connection)
         self.database = takeout_db
         # add watch history to db
         if filedict.get("watch-history"):
@@ -179,5 +185,28 @@ class InputParseAndHandle:
             inputreader = takeout.JsonReader(filedict.get("subscriptions"))
             takeout_db.scrapetakeoutsubs(inputreader, connection)
 
-
-
+    def calljson(self, args):
+        if not args.subparser_name == 'json':
+            sys.exit("Error, json somehow called without json arg")
+        # Get and load client secret file path
+        nameargs = [args.channelid, args.channelname,args.playlistid, args.videoid]
+        # If 'json' called with no options
+        if not nameargs:
+            sys.exit("Must specify a videoid, playlistid, channelid, or channelname to pull JSON data.\nRerun with \'-chid\' <channelid>, \'-chn\' <channelname>, \'-plid\' <playlistid>, or \'-vid\' <videoid> arguments")
+        # If called with at least one option, make that the db name
+        else:
+            for item in nameargs:
+                if item:
+                    dbname = item
+                    break
+        # Create the DB object (file will be created automatically on first use)
+        json_db = buildsqlitedb.BuildDB(dbname)
+        # If db file specified in args, open that
+        if args.database:
+            connection = json_db.openspecdb(args.database)
+        # Otherwise, create new db and build schema
+        else:
+            connection = json_db.opendb()
+            json_db.createschema(connection)
+        self.database = json_db
+        # args.channelid

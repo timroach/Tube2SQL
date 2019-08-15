@@ -29,7 +29,7 @@ def test_db_connection(test_db):
 
 def test_db_structure(test_db):
     connection = test_db.opendb()
-    test_db.builddb(connection)
+    test_db.createschema(connection)
     cursor = connection.cursor()
     cursor.execute("SELECT sql FROM sqlite_master WHERE name = 'Video';")
     connection.commit()

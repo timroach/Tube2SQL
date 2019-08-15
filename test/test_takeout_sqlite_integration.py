@@ -9,7 +9,7 @@ def test_db():
 
 def test_scrape_takeout_watch_history(test_db):
     connection = test_db.opendb()
-    test_db.builddb(connection)
+    test_db.createschema(connection)
     inputreader = takeout.WatchHistoryReader("watch-history.json")
     test_db.scrapetakeoutwatch(inputreader, connection)
     cursor = connection.cursor()
@@ -21,7 +21,7 @@ def test_scrape_takeout_watch_history(test_db):
 
 def test_watch_trial_run(test_db):
     connection = test_db.opendb()
-    test_db.builddb(connection)
+    test_db.createschema(connection)
     inputreader = takeout.WatchHistoryReader("../inputfiles/watch-history.json")
     test_db.scrapetakeoutwatch(inputreader, connection)
     cursor = connection.cursor()
@@ -29,21 +29,21 @@ def test_watch_trial_run(test_db):
 
 def test_like_trial_run(test_db):
     connection = test_db.opendb()
-    test_db.builddb(connection)
+    test_db.createschema(connection)
     inputreader = takeout.PlaylistReader("../inputfiles/Takeout/YouTube/playlists/likes.json")
     test_db.scrapetakeoutplaylist(inputreader, connection)
     os.remove('../db/' + test_db.filename)
 
 def test_subs_trial_run(test_db):
     connection = test_db.opendb()
-    test_db.builddb(connection)
+    test_db.createschema(connection)
     inputreader = takeout.JsonReader("../inputfiles/Takeout/YouTube/subscriptions/subscriptions.json")
     test_db.scrapetakeoutsubs(inputreader, connection)
     os.remove('../db/' + test_db.filename)
 
 def test_comments_trial_run(test_db):
     connection = test_db.opendb()
-    test_db.builddb(connection)
+    test_db.createschema(connection)
     inputreader = takeout.CommentReader("../inputfiles/Takeout/YouTube/my-comments/my-comments.html")
     buildsqlitedb.BuildDB.scrapetakeoutcomments(inputreader, connection)
     os.remove('../db/' + test_db.filename)

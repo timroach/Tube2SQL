@@ -27,7 +27,7 @@ class BuildDB:
         print("Using existing db " + self.filename)
         return sqlite3.connect(self.filename)
 
-    def builddb(self, connection):
+    def createschema(self, connection):
         cursor = connection.cursor()
         # Video table
         cursor.execute('''
@@ -36,6 +36,8 @@ class BuildDB:
             id TEXT UNIQUE, 
             title TEXT,
             channelid TEXT,
+            jsondata TEXT,
+            UNIQUE(id, jsondata),
             FOREIGN KEY (channelid) REFERENCES Channel(id))
             ;
         ''')
@@ -44,7 +46,9 @@ class BuildDB:
             CREATE TABLE Channel(
             number INTEGER PRIMARY KEY ASC,
             id TEXT UNIQUE,
-            name TEXT)
+            name TEXT,
+            jsondata TEXT,
+            UNIQUE (id, jsondata))
             ;
             ''')
         # Playlist table
@@ -54,6 +58,8 @@ class BuildDB:
             id TEXT UNIQUE,
             name TEXT, 
             userid TEXT,
+            jsondata TEXT,
+            UNIQUE (id, jsondata),
             FOREIGN KEY (userid) REFERENCES Channel(id))
             ;''')
         # Comments table
@@ -64,7 +70,8 @@ class BuildDB:
             vidid TEXT, 
             comment TEXT,
             userid TEXT,
-            UNIQUE (timestamp, vidid, comment, userid),
+            jsondata TEXT,
+            UNIQUE (timestamp, vidid, comment, userid, jsondata),
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (userid) REFERENCES Channel(id))
                     ''')
@@ -76,7 +83,8 @@ class BuildDB:
             vidid TEXT, 
             channelid TEXT,
             userid TEXT,
-            UNIQUE(timestamp, vidid, channelid, userid),
+            jsondata TEXT,
+            UNIQUE(timestamp, vidid, channelid, userid, jsondata),
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (channelid) REFERENCES Channel(id));
             ''')
@@ -88,7 +96,8 @@ class BuildDB:
             vidid TEXT,
             userid TEXT,
             playlistid TEXT,
-            UNIQUE (timestamp, vidid, userid, playlistid),
+            jsondata TEXT,
+            UNIQUE (timestamp, vidid, userid, playlistid, jsondata),
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY(userid) REFERENCES Channel(id),
             FOREIGN KEY (playlistid) REFERENCES Playlist(id));''')
@@ -99,7 +108,8 @@ class BuildDB:
             timestamp TEXT,
             channelid TEXT,
             userid TEXT,
-            UNIQUE (timestamp, channelid, userid),
+            jsondata TEXT,
+            UNIQUE (timestamp, channelid, userid, jsondata),
             FOREIGN KEY(channelid) REFERENCES Channel(id),
             FOREIGN KEY (userid) REFERENCES Channel(id))''')
         connection.commit()
@@ -166,7 +176,7 @@ class BuildDB:
                 timestamp = item.get('time', '')
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
                 cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidvalues[0], vidvalues[1], chanvalues[0]))
-                cursor.execute('INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
+                cursor.execute('INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid, jsondata) VALUES(?, ?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name, str(item)))
         cursor.execute("SELECT count(*) FROM Watch_Event")
         countend = cursor.fetchone()
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Watch_Event table")
@@ -196,7 +206,7 @@ class BuildDB:
             # File does not contain the video's channel ID, video will be inserted into table without channel ID
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
-            cursor.execute('INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
+            cursor.execute('INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid, jsondata) VALUES (?, ?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid, str(item)))
         cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
         countend = cursor.fetchone()
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
@@ -214,7 +224,7 @@ class BuildDB:
             channelname = item.get("snippet").get("title")
             timestamp = item.get("snippet").get("publishedAt")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
-            cursor.execute('INSERT OR IGNORE INTO Subscription_Add_Event(timestamp, channelid, userid) VALUES (?, ?, ?)', (timestamp, channelid, userid))
+            cursor.execute('INSERT OR IGNORE INTO Subscription_Add_Event(timestamp, channelid, userid, jsondata) VALUES (?, ?, ?, ?)', (timestamp, channelid, userid, str(item)))
         cursor.execute("SELECT count(*) FROM Subscription_Add_Event")
         countend = cursor.fetchone()
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Subscription_Add_Event table")
