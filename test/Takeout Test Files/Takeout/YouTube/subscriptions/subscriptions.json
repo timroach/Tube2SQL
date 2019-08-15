@@ -12,7 +12,7 @@
     "description" : "Test channel description 1",
     "publishedAt" : "2019-07-17T09:28:38.511Z",
     "resourceId" : {
-      "channelId" : "test channel id 1",
+      "channelId" : "test channel id from subs 1",
       "kind" : "youtube#channel"
     },
     "thumbnails" : {
@@ -42,7 +42,7 @@
     "description" : "Subscribed channel description 2",
     "publishedAt" : "2019-06-13T22:27:40.196Z",
     "resourceId" : {
-      "channelId" : "Subscribed channel ID 2",
+      "channelId" : "Subscribed channel id from subs 2",
       "kind" : "youtube#channel"
     },
     "thumbnails" : {

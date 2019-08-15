@@ -58,12 +58,12 @@ class CommentReader:
             entry = {}
             counter += 1
             if item.contents[0] == "Commented on " and item.contents[1].attrs.get("href").startswith("http://www.youtube.com/watch?"):
-                entry["vidid"] = vid.getvidid(item.contents[1].attrs.get("href"))
+                entry["vidid"] = vid.getvididcomment(item.contents[1].attrs.get("href"))
                 entry["vidtitle"] = item.contents[1].text
                 entry["timestamp"] = item.contents[2]
                 entry["comment"] = item.contents[4]
             elif item.contents[0] == "Replied to a ":
-                entry["vidid"] = vid.getvidid(item.contents[3].attrs.get("href"))
+                entry["vidid"] = vid.getvididcomment(item.contents[3].attrs.get("href"))
                 entry["vidtitle"] = item.contents[3].text
                 entry["timestamp"] = item.contents[4]
                 entry["comment"] = item.contents[6]

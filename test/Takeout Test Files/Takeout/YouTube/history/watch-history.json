@@ -1,20 +1,20 @@
 [{
   "header": "YouTube",
-  "title": "Watched Test title 1",
+  "title": "Watched Test title watch history 1",
   "titleUrl": "https://www.youtube.com/watch?v\u003dtestvidid1",
   "subtitles": [{
-    "name": "Test channel 1",
-    "url": "https://www.youtube.com/channel/testchannelid1"
+    "name": "Test channel watch history 1",
+    "url": "https://www.youtube.com/channel/testchannelwatchhistoryid1"
   }],
   "time": "2019-07-14T16:35:31.366Z",
   "products": ["YouTube"]
 },{
   "header": "YouTube",
-  "title": "Watched Test title 2",
+  "title": "Watched Test title watch history 2",
   "titleUrl": "https://www.youtube.com/watch?v\u003dtestvidid2",
   "subtitles": [{
-    "name": "Test channel 2",
-    "url": "https://www.youtube.com/channel/testchannelid2"
+    "name": "Test channel watch history 2",
+    "url": "https://www.youtube.com/channel/testchannelwatchhistoryid2"
   }],
   "time": "2019-07-14T16:30:43.247Z",
   "products": ["YouTube"]

@@ -17,7 +17,7 @@ class BuildDB:
     def opendb(self):
         print("All pathnames relative to current working dir " + os.getcwd())
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.filename = self.path + self.name + timestamp + ".db"
+        self.filename = self.path + self.name + "-" + timestamp + ".db"
         print("Created new db file " + self.filename)
         return sqlite3.connect(self.filename)
 
@@ -64,6 +64,7 @@ class BuildDB:
             vidid TEXT, 
             comment TEXT,
             userid TEXT,
+            UNIQUE (timestamp, vidid, comment, userid),
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (userid) REFERENCES Channel(id))
                     ''')
@@ -75,6 +76,7 @@ class BuildDB:
             vidid TEXT, 
             channelid TEXT,
             userid TEXT,
+            UNIQUE(timestamp, vidid, channelid, userid),
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY (channelid) REFERENCES Channel(id));
             ''')
@@ -86,6 +88,7 @@ class BuildDB:
             vidid TEXT,
             userid TEXT,
             playlistid TEXT,
+            UNIQUE (timestamp, vidid, userid, playlistid),
             FOREIGN KEY(vidid) REFERENCES Video(id),
             FOREIGN KEY(userid) REFERENCES Channel(id),
             FOREIGN KEY (playlistid) REFERENCES Playlist(id));''')
@@ -96,6 +99,7 @@ class BuildDB:
             timestamp TEXT,
             channelid TEXT,
             userid TEXT,
+            UNIQUE (timestamp, channelid, userid),
             FOREIGN KEY(channelid) REFERENCES Channel(id),
             FOREIGN KEY (userid) REFERENCES Channel(id))''')
         connection.commit()
@@ -105,6 +109,13 @@ class BuildDB:
     def getvidid(self, url):
         if len(url) > 32:
             return url[32:]
+        else:
+            return url
+
+    # Shorten video URL into video ID for comments
+    def getvididcomment(self, url):
+        if len(url) > 31:
+            return url[31:]
         else:
             return url
 
@@ -146,6 +157,8 @@ class BuildDB:
     # SQLite db
     def scrapetakeoutwatch(self, inputreader, connection):
         cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Watch_Event")
+        countbeginning = cursor.fetchone()
         for key in inputreader.keylists.keys():
             for item in inputreader.keylists.get(key):
                 vidvalues = self.videoinsertvalues(item)
@@ -154,13 +167,17 @@ class BuildDB:
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
                 cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidvalues[0], vidvalues[1], chanvalues[0]))
                 cursor.execute('INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name))
-        print("Inserted " + str(cursor.rowcount) + " rows into Watch_Event table")
+        cursor.execute("SELECT count(*) FROM Watch_Event")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Watch_Event table")
         connection.commit()
 
     # Scrape items from a takeout playlist file into
     # SQLite db
     def scrapetakeoutplaylist(self, inputreader, connection):
         cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
+        countbeginning = cursor.fetchone()
         # playlistnamere = re.search(re.compile(r"(.*\/).*"), inputreader.filename)
         playlistnamere = re.search(re.compile(r"[ \w-]+\."), inputreader.filename)
         if playlistnamere:
@@ -179,22 +196,28 @@ class BuildDB:
             # File does not contain the video's channel ID, video will be inserted into table without channel ID
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
-            cursor.execute('INSERT INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
-        print("Inserted " + str(cursor.rowcount) + " rows into Playlist_Add_Event table")
+            cursor.execute('INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid))
+        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
         connection.commit()
 
     # Scrapes data from takeout 'subscriptions.json' file
     # into SQLite db
     def scrapetakeoutsubs(self, inputreader, connection):
         cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Subscription_Add_Event")
+        countbeginning = cursor.fetchone()
         for item in inputreader.resultlist:
             userid = item.get("snippet").get("channelId")
             channelid = item.get("snippet").get("resourceId").get("channelId")
             channelname = item.get("snippet").get("title")
             timestamp = item.get("snippet").get("publishedAt")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
-            cursor.execute('INSERT INTO Subscription_Add_Event(timestamp, channelid, userid) VALUES (?, ?, ?)', (timestamp, channelid, userid))
-        print("Inserted " + str(cursor.rowcount) + " rows into Subscription_Add_Event table")
+            cursor.execute('INSERT OR IGNORE INTO Subscription_Add_Event(timestamp, channelid, userid) VALUES (?, ?, ?)', (timestamp, channelid, userid))
+        cursor.execute("SELECT count(*) FROM Subscription_Add_Event")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Subscription_Add_Event table")
         connection.commit()
 
 
@@ -202,6 +225,8 @@ class BuildDB:
     @staticmethod
     def scrapetakeoutcomments(inputreader, connection):
         cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Comment")
+        countbeginning = cursor.fetchone()
         userid = inputreader.userid
         username = inputreader.username
         for item in inputreader.resultlist:
@@ -211,8 +236,10 @@ class BuildDB:
             comment = item.get("comment")
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (userid, username))
-            cursor.execute("INSERT INTO Comment(timestamp, vidid, comment, userid) VALUES(?, ?, ?, ?)", (timestamp, vidid, comment, userid))
-        print("Inserted " + str(cursor.rowcount) + " rows into Comment table")
+            cursor.execute("INSERT OR IGNORE INTO Comment(timestamp, vidid, comment, userid) VALUES(?, ?, ?, ?)", (timestamp, vidid, comment, userid))
+        cursor.execute("SELECT count(*) FROM Comment")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Comment table")
         connection.commit()
 
 
