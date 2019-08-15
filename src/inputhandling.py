@@ -67,6 +67,12 @@ class InputParseAndHandle:
         )
 
         parser_json.add_argument(
+            '-plit', '--playlistiditems',
+            type=str, required=False,
+            help='Specify playlist ID to get info on all videos it contains'
+        )
+
+        parser_json.add_argument(
             '-vid', '--videoid',
             type=str, required=False,
             help='Specify video ID to get info on'
@@ -208,7 +214,7 @@ class InputParseAndHandle:
         # current dir, error and exit.
         if not secretfile:
             sys.exit("No Google API client secrets file specified, and none found in current directory.\nEnsure file exists and is named \"client_secret_....json\"\nTo obtain a client secrets file, register at developers.google.com and create and download an OAuth 2.0 client ID file from the Credentials console.")
-        nameargs = [args.channelid, args.channelname, args.playlistid, args.videoid]
+        nameargs = [args.channelid, args.channelname, args.playlistid, args.videoid, args.playlistiditems]
         # If 'json' called with no options
         if not any(nameargs):
             sys.exit("Must specify a videoid, playlistid, channelid, or channelname to pull JSON data.\nRerun with \'-chid\' <channelid>, \'-chn\' <channelname>, \'-plid\' <playlistid>, or \'-vid\' <videoid> arguments")
@@ -228,11 +234,34 @@ class InputParseAndHandle:
             connection = json_db.opendb()
             json_db.createschema(connection)
         self.database = json_db
+        # Create jsonquery object to handle json calls
         jsonquery = jsoncall.apiquery(secretfile)
-        if args.channelid:
-            response = jsonquery.executerequest("channelid", args.channelid)
+
+        # Query for channelID and channel name, add to db
+        def channelresponse(response, json_db):
             results = response.get("pageInfo").get("totalResults")
             if results < 1:
-                sys.exit("Channel ID query returned 0 results from YouTube's API")
+                print("Channel ID or username query returned 0 results from YouTube's API")
             else:
                 json_db.scrapechannellisting(response.get("items"), connection)
+
+        if args.channelid:
+            response = jsonquery.executerequest("channelid", args.channelid)
+            channelresponse(response, json_db)
+        if args.channelname:
+            response = jsonquery.executerequest("channelname", args.channelname)
+            channelresponse(response, json_db)
+
+        # Query for a playlist - just get info on one playlist
+        if args.playlistid:
+            response = jsonquery.executerequest("playlistid", args.playlistid)
+            #results = response.
+
+        # Query for info on all videos in a playlist
+        if args.playlistiditems:
+            response = jsonquery.executerequest("playlistiditems", args.playlistiditems)
+            results = response.get("pageInfo").get("totalResults")
+            if results < 1:
+                print("Playlist ID query returned 0 results from Youtube's API")
+            else:
+                json_db.scrapeplaylistcontents(response.get("items"), connection, jsonquery)

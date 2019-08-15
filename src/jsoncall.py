@@ -11,21 +11,6 @@ class apiquery:
         self.secretsfile = secretsfile
         self.api_service_name = "youtube"
         self.api_version = "v3"
-
-    # Takes a channelid, returns list of API call results
-    def channelidinfo(self, youtube, channelid):
-        return youtube.channels().list(
-            part="snippet,contentDetails,statistics",
-            id=channelid
-        )
-
-    # Takes a channel name, returns list of API call results
-    def channelnameinfo(self, name):
-        request = "request = youtube.channels().list part=\"snippet,contentDetails,statistics\",        forUsername=\"" + name + "\")"
-        rawjson = self.executerequest(request)
-        return json.load(rawjson)
-
-    def executerequest(self, type, identifier):
         # Code adapted from sample provided at
         # developers.google.com/youtube/
 
@@ -33,18 +18,70 @@ class apiquery:
         # *DO NOT* leave this option enabled in production.
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-
-        client_secrets_file = self.secretsfile
+        self.client_secrets_file = self.secretsfile
 
         # Get credentials and create an API client
-        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-            client_secrets_file, scopes)
-        credentials = flow.run_console()
-        youtube = googleapiclient.discovery.build(
-            self.api_service_name, self.api_version, credentials=credentials)
+        self.flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+            self.client_secrets_file, scopes)
+        self.credentials = self.flow.run_console()
+        self.youtube = googleapiclient.discovery.build(
+            self.api_service_name, self.api_version, credentials=self.credentials)
+
+    # Takes a channelid, returns list of API call results
+    def channelidinfo(self, youtube, channelid):
+        return youtube.channels().list(
+            part="snippet,contentDetails,statistics",
+            id=channelid,
+            maxResults=1
+        )
+
+    # Takes a channel name, returns list of API call results
+    def channelnameinfo(self, youtube, channelname):
+        return youtube.channels().list(
+            part="snippet,contentDetails,statistics",
+            forUsername=channelname,
+            maxResults=1
+        )
+
+    # Takes a playlistID, returns info about playlist
+    def playlistid(self, youtube, playlistid):
+        return youtube.playlists().list(
+            part="snippet,contentDetails",
+            id=playlistid,
+            maxResults=1
+        )
+
+    # Takes a playlistID, returns list of videos in playlist
+    def playlistidvids(self, youtube, playlistid):
+        return youtube.playlistItems().list(
+            part="snippet,contentDetails",
+            playlistId=playlistid,
+            maxResults=50
+        )
+
+    # Takes a videoID, returns info on video
+    def videoid(self, youtube, videoid):
+        return youtube.videos().list(
+            part="snippet,contentDetails,statistics",
+            id=videoid,
+            maxResults=1
+        )
+
+    def executerequest(self, type, identifier):
+
 
         if type is "channelid":
-            response = self.channelidinfo(youtube, identifier).execute()
+            response = self.channelidinfo(self.youtube, identifier).execute()
+        elif type is "channelname":
+            response = self.channelnameinfo(self.youtube, identifier).execute()
+        elif type is "playlistid":
+            response = self.playlistid(self.youtube, identifier).execute()
+        elif type is "playlistiditems":
+            response = self.playlistidvids(self.youtube, identifier).execute()
+        elif type is "videoid":
+            response = self.videoid(self.youtube, identifier).execute()
+        else:
+            response = None
 
         return response
 

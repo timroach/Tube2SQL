@@ -3,6 +3,7 @@ import os
 import fnmatch
 import datetime
 import re
+from src import jsoncall
 
 
 class BuildDB:
@@ -258,9 +259,40 @@ class BuildDB:
         countbeginning = cursor.fetchone()
         for item in resultlist:
             channelid = item.get("id")
-            channelname = item.get("snippet").get("title")
+            channelname = item.get("snippet").get("customUrl")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name, jsondata) VALUES(?, ?, ?)', (channelid, channelname, str(item)))
         cursor.execute("SELECT count(*) FROM Channel")
         countend = cursor.fetchone()
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Channel table")
+        connection.commit()
+
+    def scrapeplaylistcontents(self, resultlist, connection, jsonquery):
+        cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
+        countbeginning = cursor.fetchone()
+        playlistid = resultlist[0].get("snippet").get("playlistId")
+        response = jsonquery.executerequest("playlistid", playlistid)
+        playlistname = response.get("items")[0].get("snippet").get("title")
+        for item in resultlist:
+            vidid = item.get("contentDetails").get("videoId")
+            vidtitle = item.get("snippet").get("title")
+            vidresponse = jsonquery.executerequest("videoid", vidid)
+            if vidresponse.get("items"):
+                vidchannelid = vidresponse.get("items")[0].get("snippet").get("channelId")
+            else:
+                vidchannelid = ""
+            timestamp = item.get("contentDetails").get("videoPublishedAt")
+            channelid = item.get("snippet").get("channelId")
+            channelname = item.get("snippet").get("channelTitle")
+            playlistid = item.get("snippet").get("playlistId")
+            cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
+            cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid, jsondata) VALUES(?, ?, ?, ?)', (vidid, vidtitle, vidchannelid, str(next(iter(vidresponse.get("items")), ""))))
+            cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid, jsondata) VALUES(?, ?, ?, ?)',
+                           (playlistid, playlistname, channelid, str(next(iter(response.get("items")), ""))))
+            cursor.execute(
+                'INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid, jsondata) VALUES (?, ?, ?, ?, ?)',
+                (timestamp, vidid, channelid, playlistid, str(item)))
+        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
         connection.commit()
