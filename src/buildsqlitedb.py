@@ -252,4 +252,15 @@ class BuildDB:
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Comment table")
         connection.commit()
 
-
+    def scrapechannellisting(self, resultlist, connection):
+        cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Channel")
+        countbeginning = cursor.fetchone()
+        for item in resultlist:
+            channelid = item.get("id")
+            channelname = item.get("snippet").get("title")
+            cursor.execute('INSERT OR IGNORE INTO Channel(id, name, jsondata) VALUES(?, ?, ?)', (channelid, channelname, str(item)))
+        cursor.execute("SELECT count(*) FROM Channel")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Channel table")
+        connection.commit()

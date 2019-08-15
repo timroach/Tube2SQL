@@ -1,6 +1,9 @@
 import sys
+import os
 import argparse
-from src import takeout, buildsqlitedb
+import re
+from src import takeout, buildsqlitedb, jsoncall
+
 
 
 class InputParseAndHandle:
@@ -70,7 +73,7 @@ class InputParseAndHandle:
         )
 
         parser_json.add_argument(
-            '-s', '-secrets',
+            '-s', '--secrets',
             type=str, required=False,
             help='Specify Google API secrets.json file to use for requests'
         )
@@ -189,9 +192,25 @@ class InputParseAndHandle:
         if not args.subparser_name == 'json':
             sys.exit("Error, json somehow called without json arg")
         # Get and load client secret file path
-        nameargs = [args.channelid, args.channelname,args.playlistid, args.videoid]
+        secretfile = ""
+        if args.secrets:
+            secretfile = args.secrets
+        else:
+            pattern = re.compile(r"(client_secret_).*(json)")
+            files = [f for f in os.listdir('..') if os.path.join('..', f)]
+            for file in files:
+                result = pattern.search(file)
+                if result:
+                    secretfile = os.path.join(os.path.abspath(".."), file)
+                    break
+        # If this point is reached, no secretfile was
+        # provided and none was found in the
+        # current dir, error and exit.
+        if not secretfile:
+            sys.exit("No Google API client secrets file specified, and none found in current directory.\nEnsure file exists and is named \"client_secret_....json\"\nTo obtain a client secrets file, register at developers.google.com and create and download an OAuth 2.0 client ID file from the Credentials console.")
+        nameargs = [args.channelid, args.channelname, args.playlistid, args.videoid]
         # If 'json' called with no options
-        if not nameargs:
+        if not any(nameargs):
             sys.exit("Must specify a videoid, playlistid, channelid, or channelname to pull JSON data.\nRerun with \'-chid\' <channelid>, \'-chn\' <channelname>, \'-plid\' <playlistid>, or \'-vid\' <videoid> arguments")
         # If called with at least one option, make that the db name
         else:
@@ -209,4 +228,11 @@ class InputParseAndHandle:
             connection = json_db.opendb()
             json_db.createschema(connection)
         self.database = json_db
-        # args.channelid
+        jsonquery = jsoncall.apiquery(secretfile)
+        if args.channelid:
+            response = jsonquery.executerequest("channelid", args.channelid)
+            results = response.get("pageInfo").get("totalResults")
+            if results < 1:
+                sys.exit("Channel ID query returned 0 results from YouTube's API")
+            else:
+                json_db.scrapechannellisting(response.get("items"), connection)
