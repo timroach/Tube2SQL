@@ -33,9 +33,9 @@ Global option:
 * `--chn --channelname` Query by channel name (custom YouTube URL) and add it to the Channel table
 * `--plid --playlistid` Query by playlist ID, add it to the Playlist table
 * `--plit --playlistiditems` Query by playlist ID, and add all videos contained to the Video table, all channels contained to the Channel table, and each item to the Playlist_Add_Event table, making additional sub-queries to fill in missing information.
-* `-vid --videoid` Query by video ID
+* `-vid --videoid` Query by video ID *not yet implemented*
 * `-s --secrets <path>` Specify path to client secrets file for accessing YouTube API
-* `-m --maxqueries <int>` Specify max number of calls to make to the API
+* `-m --maxqueries <int>` Specify max number of calls to make to the API *not yet implemented*
 
 ## Database Structure
 This image shows the relational structure of the tables in the SQLite db created by the tool:
