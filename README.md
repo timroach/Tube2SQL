@@ -5,7 +5,7 @@ This is a tool for analyzing relationships between YouTube channels in terms of 
 This tool was developed on Ubuntu Linux, and while the path conventions used *should* be compatible with Windows pathnames, this has not yet been tested. To install the software, git clone the project to a local directory, then from the command line in the root directory, run `$ pip install -r requirements.txt` which should install all required package dependencies. 
 
 ## Before running for the first time
-This tool relies on external sources of data to build up it's relational database, which must be acquired from takeout.google.com or pulled from YouTube's Data API using an appropriate developer account client secrets file (and an active internet connection). You should get one or both of these sources set up before you try to use the tool.
+This tool relies on external sources of data to build up it's relational database, which must be acquired from takeout.google.com or pulled from YouTube's Data API using an appropriate developer account client secrets file (and an active internet connection). You should get one or both of these sources set up before you try to use the tool, or see the "Test Takeout and unit tests" section below for information on running the tool on provided dummy JSON files.
 
 ### Google Takeout
 This tool needs the following files from Google YouTube Takeout to create it's database: **history, my-comments, playlists, and subscriptions**
