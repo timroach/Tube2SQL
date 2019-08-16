@@ -37,6 +37,14 @@ Global option:
 * `-s --secrets <path>` Specify path to client secrets file for accessing YouTube API
 * `-m --maxqueries <int>` Specify max number of calls to make to the API
 
+## Database Structure
+This image shows the relational structure of the tables in the SQLite db created by the tool:
+![alt text](schema.png "Database Schema")
+
+## Test Takeout files and unit tests
+Some unit tests have been written using the pytest framework, which are located in the `/test` directory. Also provided in the test directory are a set of Takeout files in an appropriate directory structure, which can be used to test the functionality of the program without having to download user information from Google Takeout. 
+
+To run the tool on the test files, use the command `tube2sql takeout -d "../test/Takeout Test Files/"`
 
 ## Author
 Tim Roach
