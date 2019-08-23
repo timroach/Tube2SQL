@@ -296,3 +296,21 @@ class BuildDB:
         countend = cursor.fetchone()
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
         connection.commit()
+
+    def scrapevideoid(self, resultlist, connection):
+        cursor = connection.cursor()
+        cursor.execute("SELECT count(*) FROM Video")
+        countbeginning = cursor.fetchone()
+        for item in resultlist:
+            cursor.execute("SELECT * FROM Video WHERE id = ?", (item.get("id"),))
+            if cursor.rowcount > 0:
+                continue
+            else:
+                channelid = item.get("snippet").get("channelId")
+                videoid = item.get("id")
+                vidtitle = item.get("snippet").get("title")
+                cursor.execute("INSERT OR IGNORE INTO Video(id, title, channelid, jsondata) VALUES(?, ?, ?, ?)", (videoid, vidtitle, channelid, str(item)))
+        cursor.execute("SELECT count(*) FROM Video")
+        countend = cursor.fetchone()
+        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Video table")
+        connection.commit()

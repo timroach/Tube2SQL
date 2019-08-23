@@ -265,3 +265,12 @@ class InputParseAndHandle:
                 print("Playlist ID query returned 0 results from Youtube's API")
             else:
                 json_db.scrapeplaylistcontents(response.get("items"), connection, jsonquery)
+
+        # Query for info on a specific video
+        if args.videoid:
+            response = jsonquery.executerequest("videoid", args.videoid)
+            results = response.get("pageInfo").get("totalResults")
+            if results < 1:
+                print("Video ID query returned 0 results from Youtube's API")
+            else:
+                json_db.scrapevideoid(response.get("items"), connection)
