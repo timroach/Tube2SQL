@@ -179,7 +179,51 @@ class BuildDB:
         selectstring = "SELECT count(*) FROM " + tablename
         cursor.execute(selectstring)
         return cursor.fetchone()
-    
+
+    # Insert into Channel table
+    def channelinsert(self, cursor, channelid, name, jsondata):
+        if not jsondata:
+            statement = "INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)"
+            cursor.execute(statement, (channelid, name))
+        else:
+            statement = "INSERT OR REPLACE INTO Channel(id, name, jsondata) VALUES(?,?,?)"
+            cursor.execute(statement, (channelid, name, str(jsondata)))
+
+    # Insert into Video table
+    def videoinsert(self, cursor, videoid, title, channelid, jsondata):
+        if not jsondata:
+            statement = 'INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)'
+            cursor.execute(statement, (videoid, title, channelid))
+        else:
+            statement = 'INSERT OR REPLACE INTO Video(id, title, channelid, jsondata) VALUES(?, ?, ?, ?)'
+            cursor.execute(statement, (videoid, title, channelid, str(jsondata)))
+    # Insert into Playlist table
+    def playlistinsert(self, cursor, playlistid, playlistname, userid, jsondata):
+        if not jsondata:
+            statement = "INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)"
+            cursor.execute(statement, (playlistid, playlistname, userid))
+        else:
+            statement = "INSERT OR REPLACE INTO Playlist(id, name, userid, jsondata) VALUES(?, ?, ?, ?)"
+            cursor.execute(statement, (playlistid, playlistname, userid, str(jsondata)))
+
+    # Insert into Watch_Event table
+    def watcheventinsert(self, cursor, timestamp, vidid, channelid, userid, jsondata):
+        if not jsondata:
+            statement = "INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid) VALUES(?, ?, ?, ?)"
+            cursor.execute(statement, (timestamp, vidid, channelid, userid))
+        else:
+            statement = "INSERT OR REPLACE INTO Watch_Event(timestamp, vidid, channelid, userid, jsondata) VALUES(?, ?, ?, ?, ?)"
+            cursor.execute(statement, (timestamp, vidid, channelid, userid, str(jsondata)))
+
+    # Insert into Playlist_Add_Event table
+    def playlistaddinsert(self, cursor, timestamp, vidid, userid, playlistid, jsondata):
+        if not jsondata:
+            statement = "INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid) VALUES (?, ?, ?, ?)"
+            cursor.execute(statement, (timestamp, vidid, userid, playlistid))
+        else:
+            statement = "INSERT OR REPLACE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid, jsondata) VALUES (?, ?, ?, ?, ?)"
+            cursor.execute(statement, (timestamp, vidid, userid, playlistid, str(jsondata)))
+
     # Scrape items from takeout 'watch-history.json' file into
     # SQLite db
     def scrapetakeoutwatch(self, inputreader, connection):
@@ -190,10 +234,9 @@ class BuildDB:
                 vidvalues = self.videoinsertvalues(item)
                 chanvalues = self.channelinsertvalues(item)
                 timestamp = item.get('time', '')
-                cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
-                cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidvalues[0], vidvalues[1], chanvalues[0]))
-                cursor.execute('INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid, jsondata) VALUES(?, ?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name, str(item)))
-        # cursor.execute("SELECT count(*) FROM Watch_Event")
+                self.channelinsert(cursor, chanvalues[0], chanvalues[1], None)
+                self.videoinsert(cursor, vidvalues[0], vidvalues[1], chanvalues[0], None)
+                self.watcheventinsert(cursor, timestamp, vidvalues[0], chanvalues[0], self.name, item)
         countend = self.countrows("Watch_Event", connection)[0]
         print("Inserted " + str(countend - countbeginning) + " rows into Watch_Event table")
         connection.commit()
@@ -217,11 +260,12 @@ class BuildDB:
             channelid = item.get("snippet").get("channelId")
             channelname = item.get("snippet").get("channelTitle")
             playlistid = item.get("snippet").get("playlistId")
-            cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
-            # File does not contain the video's channel ID, video will be inserted into table without channel ID
+            self.channelinsert(cursor, channelid, channelname, None)
+            # File does not contain the video's channel ID,
+            # video will be inserted into table without channel ID
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
-            cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
-            cursor.execute('INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid, jsondata) VALUES (?, ?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid, str(item)))
+            self.playlistinsert(cursor, playlistid, playlistname, channelid, None)
+            self.playlistaddinsert(cursor, timestamp, vidid, channelid, playlistid, item)
         countend = self.countrows("Playlist_Add_Event", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
         connection.commit()
