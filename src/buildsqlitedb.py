@@ -164,12 +164,27 @@ class BuildDB:
         else:
             return '', ''
 
+    # Check if video exists in db
+    def videoexists(self, vidid, connection):
+        exists = False
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM Video WHERE id = ?", (vidid,))
+        if cursor.rowcount > 0:
+            exists = True
+        return exists, cursor.fetchone()
+
+    # Count rows in table
+    def countrows(self, tablename, connection):
+        cursor = connection.cursor()
+        selectstring = "SELECT count(*) FROM " + tablename
+        cursor.execute(selectstring)
+        return cursor.fetchone()
+    
     # Scrape items from takeout 'watch-history.json' file into
     # SQLite db
     def scrapetakeoutwatch(self, inputreader, connection):
         cursor = connection.cursor()
-        cursor.execute("SELECT count(*) FROM Watch_Event")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Watch_Event", connection)[0]
         for key in inputreader.keylists.keys():
             for item in inputreader.keylists.get(key):
                 vidvalues = self.videoinsertvalues(item)
@@ -178,17 +193,16 @@ class BuildDB:
                 cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?,?)', chanvalues)
                 cursor.execute('INSERT OR IGNORE INTO Video(id, title, channelid) VALUES(?, ?, ?)', (vidvalues[0], vidvalues[1], chanvalues[0]))
                 cursor.execute('INSERT OR IGNORE INTO Watch_Event(timestamp, vidid, channelid, userid, jsondata) VALUES(?, ?, ?, ?, ?)', (timestamp, vidvalues[0], chanvalues[0], self.name, str(item)))
-        cursor.execute("SELECT count(*) FROM Watch_Event")
-        countend = cursor.fetchone()
-        print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Watch_Event table")
+        # cursor.execute("SELECT count(*) FROM Watch_Event")
+        countend = self.countrows("Watch_Event", connection)[0]
+        print("Inserted " + str(countend - countbeginning) + " rows into Watch_Event table")
         connection.commit()
 
     # Scrape items from a takeout playlist file into
     # SQLite db
     def scrapetakeoutplaylist(self, inputreader, connection):
         cursor = connection.cursor()
-        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Playlist_Add_Event", connection)
         # playlistnamere = re.search(re.compile(r"(.*\/).*"), inputreader.filename)
         playlistnamere = re.search(re.compile(r"[ \w-]+\."), inputreader.filename)
         if playlistnamere:
@@ -208,8 +222,7 @@ class BuildDB:
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Playlist(id, name, userid) VALUES(?, ?, ?)', (playlistid, playlistname, channelid))
             cursor.execute('INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid, jsondata) VALUES (?, ?, ?, ?, ?)', (timestamp, vidid, channelid, playlistid, str(item)))
-        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
-        countend = cursor.fetchone()
+        countend = self.countrows("Playlist_Add_Event", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
         connection.commit()
 
@@ -218,7 +231,7 @@ class BuildDB:
     def scrapetakeoutsubs(self, inputreader, connection):
         cursor = connection.cursor()
         cursor.execute("SELECT count(*) FROM Subscription_Add_Event")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Subscription_Add_Event", connection)
         for item in inputreader.resultlist:
             userid = item.get("snippet").get("channelId")
             channelid = item.get("snippet").get("resourceId").get("channelId")
@@ -226,18 +239,13 @@ class BuildDB:
             timestamp = item.get("snippet").get("publishedAt")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (channelid, channelname))
             cursor.execute('INSERT OR IGNORE INTO Subscription_Add_Event(timestamp, channelid, userid, jsondata) VALUES (?, ?, ?, ?)', (timestamp, channelid, userid, str(item)))
-        cursor.execute("SELECT count(*) FROM Subscription_Add_Event")
-        countend = cursor.fetchone()
+        countend = self.countrows("Subscription_Add_Event", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Subscription_Add_Event table")
         connection.commit()
 
-
-
-    @staticmethod
-    def scrapetakeoutcomments(inputreader, connection):
+    def scrapetakeoutcomments(self, inputreader, connection):
         cursor = connection.cursor()
-        cursor.execute("SELECT count(*) FROM Comment")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Comment", connection)
         userid = inputreader.userid
         username = inputreader.username
         for item in inputreader.resultlist:
@@ -248,28 +256,24 @@ class BuildDB:
             cursor.execute('INSERT OR IGNORE INTO Video(id, title) VALUES(?, ?)', (vidid, vidtitle))
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name) VALUES(?, ?)', (userid, username))
             cursor.execute("INSERT OR IGNORE INTO Comment(timestamp, vidid, comment, userid) VALUES(?, ?, ?, ?)", (timestamp, vidid, comment, userid))
-        cursor.execute("SELECT count(*) FROM Comment")
-        countend = cursor.fetchone()
+        countend = self.countrows("Comment", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Comment table")
         connection.commit()
 
     def scrapechannellisting(self, resultlist, connection):
         cursor = connection.cursor()
-        cursor.execute("SELECT count(*) FROM Channel")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Channel", connection)
         for item in resultlist:
             channelid = item.get("id")
             channelname = item.get("snippet").get("customUrl")
             cursor.execute('INSERT OR IGNORE INTO Channel(id, name, jsondata) VALUES(?, ?, ?)', (channelid, channelname, str(item)))
-        cursor.execute("SELECT count(*) FROM Channel")
-        countend = cursor.fetchone()
+        countend = self.countrows("Channel", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Channel table")
         connection.commit()
 
     def scrapeplaylistcontents(self, resultlist, connection, jsonquery):
         cursor = connection.cursor()
-        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Playlist_Add_Event", connection)
         playlistid = resultlist[0].get("snippet").get("playlistId")
         response = jsonquery.executerequest("playlistid", playlistid)
         playlistname = response.get("items")[0].get("snippet").get("title")
@@ -292,25 +296,21 @@ class BuildDB:
             cursor.execute(
                 'INSERT OR IGNORE INTO Playlist_Add_Event(timestamp, vidid, userid, playlistid, jsondata) VALUES (?, ?, ?, ?, ?)',
                 (timestamp, vidid, channelid, playlistid, str(item)))
-        cursor.execute("SELECT count(*) FROM Playlist_Add_Event")
-        countend = cursor.fetchone()
+        countend = self.countrows("Playlist_Add_Event", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Playlist_Add_Event table")
         connection.commit()
 
     def scrapevideoid(self, resultlist, connection):
         cursor = connection.cursor()
-        cursor.execute("SELECT count(*) FROM Video")
-        countbeginning = cursor.fetchone()
+        countbeginning = self.countrows("Video", connection)
         for item in resultlist:
-            cursor.execute("SELECT * FROM Video WHERE id = ?", (item.get("id"),))
-            if cursor.rowcount > 0:
+            if not self.videoexists(item.get("id"), connection)[0]:
                 continue
             else:
                 channelid = item.get("snippet").get("channelId")
                 videoid = item.get("id")
                 vidtitle = item.get("snippet").get("title")
                 cursor.execute("INSERT OR IGNORE INTO Video(id, title, channelid, jsondata) VALUES(?, ?, ?, ?)", (videoid, vidtitle, channelid, str(item)))
-        cursor.execute("SELECT count(*) FROM Video")
-        countend = cursor.fetchone()
+        countend = self.countrows("Video", connection)
         print("Inserted " + str(countend[0] - countbeginning[0]) + " rows into Video table")
         connection.commit()
